@@ -15,6 +15,7 @@ public class Itinerary {
     private String destination;
 
     @ElementCollection
+    @Column(length = 2000)
     private List<String> days = new ArrayList<>();
 
     public Itinerary() {
