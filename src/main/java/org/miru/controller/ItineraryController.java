@@ -1,12 +1,12 @@
 package org.miru.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.miru.model.Itinerary;
 import org.miru.model.Preference;
 import org.miru.repository.ItineraryRepository;
 import org.miru.service.GeminiService;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -15,26 +15,31 @@ public class ItineraryController {
 
     private final ItineraryRepository itineraryRepository;
     private final GeminiService geminiService;
+    private final ObjectMapper objectMapper;
 
     public ItineraryController(ItineraryRepository itineraryRepository, GeminiService geminiService) {
         this.itineraryRepository = itineraryRepository;
         this.geminiService = geminiService;
+        this.objectMapper = new ObjectMapper();
     }
 
     @PostMapping("/generate")
     public Itinerary generateItinerary(@RequestBody Preference preference) {
+        try {
+            String aiResponse = geminiService.generateItinerary(preference);
 
-        String aiResponse = geminiService.generateItinerary(preference);
+            aiResponse = aiResponse
+                    .replace("```json", "")
+                    .replace("```", "")
+                    .trim();
 
-        List<String> days = Arrays.stream(aiResponse.split("\\n"))
-                .filter(line -> !line.isBlank())
-                .toList();
+            Itinerary itinerary = objectMapper.readValue(aiResponse, Itinerary.class);
 
-        Itinerary itinerary = new Itinerary();
-        itinerary.setDestination(preference.getDestination());
-        itinerary.setDays(days);
+            return itineraryRepository.save(itinerary);
 
-        return itineraryRepository.save(itinerary);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate itinerary with Gemini: " + e.getMessage());
+        }
     }
 
     @GetMapping

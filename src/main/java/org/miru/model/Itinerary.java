@@ -14,15 +14,18 @@ public class Itinerary {
 
     private String destination;
 
-    @ElementCollection
-    @Column(length = 2000)
-    private List<String> days = new ArrayList<>();
+    @Column(length = 3000)
+    private String summary;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItineraryDay> days = new ArrayList<>();
 
     public Itinerary() {
     }
 
-    public Itinerary(String destination, List<String> days) {
+    public Itinerary(String destination, String summary, List<ItineraryDay> days) {
         this.destination = destination;
+        this.summary = summary;
         this.days = days;
     }
 
@@ -38,11 +41,19 @@ public class Itinerary {
         this.destination = destination;
     }
 
-    public List<String> getDays() {
+    public String getSummary() {
+        return summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public List<ItineraryDay> getDays() {
         return days;
     }
 
-    public void setDays(List<String> days) {
+    public void setDays(List<ItineraryDay> days) {
         this.days = days;
     }
 }

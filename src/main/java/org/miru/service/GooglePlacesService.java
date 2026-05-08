@@ -29,7 +29,7 @@ public class GooglePlacesService {
                 .uri("/places:searchText")
                 .header("Content-Type", "application/json")
                 .header("X-Goog-Api-Key", apiKey)
-                .header("X-Goog-FieldMask", "places.displayName,places.formattedAddress,places.rating")
+                .header("X-Goog-FieldMask", "places.displayName,places.formattedAddress,places.rating,places.location")
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(Map.class)
@@ -51,10 +51,72 @@ public class GooglePlacesService {
 
             Object ratingObject = place.get("rating");
             Double rating = ratingObject != null ? Double.valueOf(ratingObject.toString()) : null;
+            Map<String, Object> location = (Map<String, Object>) place.get("location");
 
-            recommendations.add(new PlaceRecommendation(name, address, rating));
+            Double latitude = null;
+            Double longitude = null;
+
+            if (location != null) {
+                Object latObject = location.get("latitude");
+                Object lngObject = location.get("longitude");
+
+                latitude = latObject != null ? Double.valueOf(latObject.toString()) : null;
+                longitude = lngObject != null ? Double.valueOf(lngObject.toString()) : null;
+            }
+            recommendations.add(new PlaceRecommendation(name, address, rating, latitude, longitude));
         }
 
         return recommendations;
+    }
+    public PlaceRecommendation findPlace(String placeName, String destination) {
+
+        Map<String, Object> requestBody = Map.of(
+                "textQuery", placeName + " in " + destination
+        );
+
+        Map<String, Object> response = webClient.post()
+                .uri("/places:searchText")
+                .header("Content-Type", "application/json")
+                .header("X-Goog-Api-Key", apiKey)
+                .header("X-Goog-FieldMask", "places.displayName,places.formattedAddress,places.rating,places.location")
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
+
+        if (response == null || response.get("places") == null) {
+            return null;
+        }
+
+        List<Map<String, Object>> places = (List<Map<String, Object>>) response.get("places");
+
+        if (places.isEmpty()) {
+            return null;
+        }
+
+        Map<String, Object> place = places.get(0);
+
+        Map<String, Object> displayName = (Map<String, Object>) place.get("displayName");
+
+        String name = displayName != null ? (String) displayName.get("text") : placeName;
+        String address = (String) place.get("formattedAddress");
+
+        Object ratingObject = place.get("rating");
+        Double rating = ratingObject != null ? Double.valueOf(ratingObject.toString()) : null;
+
+        Map<String, Object> location = (Map<String, Object>) place.get("location");
+
+        Double latitude = null;
+        Double longitude = null;
+
+        if (location != null) {
+            Object latObject = location.get("latitude");
+            Object lngObject = location.get("longitude");
+
+            latitude = latObject != null ? Double.valueOf(latObject.toString()) : null;
+            longitude = lngObject != null ? Double.valueOf(lngObject.toString()) : null;
+        }
+
+        return new PlaceRecommendation(name, address, rating, latitude, longitude);
     }
 }

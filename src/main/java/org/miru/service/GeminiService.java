@@ -19,26 +19,72 @@ public class GeminiService {
             .build();
 
     public String generateItinerary(Preference preference) {
-
         String prompt = """
-                Generate a 3-day travel itinerary based on these preferences:
-                Destination: %s
-                Period: %s
-                Budget: %s
-                Interests: %s
+        Generate a detailed 3-day travel itinerary based on these preferences:
+        Destination: %s
+        Period: %s
+        Budget: %s
+        Interests: %s
 
-                Return the itinerary as plain text.
-                Use exactly this format:
-                Day 1: ...
-                Day 2: ...
-                Day 3: ...
-                """.formatted(
+        Return ONLY valid JSON.
+        Do not include markdown.
+        Do not include explanations outside the JSON.
+
+        Use exactly this JSON structure:
+        {
+          "destination": "destination name",
+          "summary": "A friendly overview of the trip, 2-3 sentences.",
+          "days": [
+            {
+              "dayNumber": 1,
+              "description": "Detailed itinerary text for Day 1.",
+              "places": [
+                "Real place name 1",
+                "Real place name 2"
+              ],
+              "restaurantAreas": [
+                "Real area or neighborhood 1"
+              ]
+            },
+            {
+              "dayNumber": 2,
+              "description": "Detailed itinerary text for Day 2.",
+              "places": [
+                "Real place name 3",
+                "Real place name 4"
+              ],
+              "restaurantAreas": [
+                "Real area or neighborhood 2"
+              ]
+            },
+            {
+              "dayNumber": 3,
+              "description": "Detailed itinerary text for Day 3.",
+              "places": [
+                "Real place name 5",
+                "Real place name 6"
+              ],
+              "restaurantAreas": [
+                "Real area or neighborhood 3"
+              ]
+            }
+          ]
+        }
+
+        Rules:
+        - Generate exactly 3 days.
+        - Each day must have 3 to 5 concrete real places.
+        - Places must be real landmarks, museums, neighborhoods, parks or attractions from the destination.
+        - Restaurant areas must be real neighborhoods or areas where restaurants can be searched.
+        - Do not put full sentences in places.
+        - Do not invent ticket prices, exact opening hours or availability.
+        - Keep the description detailed but not too long.
+        """.formatted(
                 preference.getDestination(),
                 preference.getPeriod(),
                 preference.getBudget(),
                 preference.getInterests()
         );
-
         Map<String, Object> requestBody = Map.of(
                 "contents", List.of(
                         Map.of(
@@ -50,7 +96,7 @@ public class GeminiService {
         );
 
         Map<String, Object> response = webClient.post()
-                .uri("/models/gemini-3-flash-preview:generateContent?key=" + apiKey)
+                .uri("/models/gemini-2.5-flash:generateContent?key=" + apiKey)
                 .header("Content-Type", "application/json")
                 .bodyValue(requestBody)
                 .retrieve()
