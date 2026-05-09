@@ -65,4 +65,29 @@ public class RecommendationController {
 
         return result;
     }
+    @GetMapping("/itinerary/{itineraryId}/day/{dayNumber}/restaurants")
+    public List<PlaceRecommendation> getRestaurantsForItineraryDay(
+            @PathVariable Long itineraryId,
+            @PathVariable int dayNumber
+    ) {
+        Itinerary itinerary = itineraryRepository.findById(itineraryId)
+                .orElseThrow(() -> new RuntimeException("Itinerary not found"));
+
+        ItineraryDay selectedDay = itinerary.getDays()
+                .stream()
+                .filter(day -> day.getDayNumber() == dayNumber)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Day not found"));
+
+        List<PlaceRecommendation> result = new ArrayList<>();
+
+        for (String area : selectedDay.getRestaurantAreas()) {
+            List<PlaceRecommendation> restaurants =
+                    googlePlacesService.findRestaurants(itinerary.getDestination(), area);
+
+            result.addAll(restaurants);
+        }
+
+        return result;
+    }
 }
