@@ -55,7 +55,19 @@ public class ItineraryController {
         return itineraryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Itinerary not found"));
     }
+    @PutMapping("/{id}")
+    public Itinerary updateItinerary(@PathVariable Long id, @RequestBody Itinerary updatedItinerary) {
+        Itinerary existingItinerary = itineraryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Itinerary not found"));
 
+        existingItinerary.setDestination(updatedItinerary.getDestination());
+        existingItinerary.setSummary(updatedItinerary.getSummary());
+
+        existingItinerary.getDays().clear();
+        existingItinerary.getDays().addAll(updatedItinerary.getDays());
+
+        return itineraryRepository.save(existingItinerary);
+    }
     @DeleteMapping("/{id}")
     public void deleteItinerary(@PathVariable Long id) {
         itineraryRepository.deleteById(id);
