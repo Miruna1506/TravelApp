@@ -92,4 +92,8 @@ public class ItineraryController {
     public void deleteItinerary(@PathVariable Long id) {
         itineraryRepository.deleteById(id);
     }
+    @GetMapping("/search")
+    public List<Itinerary> searchItineraries(@RequestParam String destination) {
+        return itineraryRepository.findByDestinationContainingIgnoreCase(destination);
+    }
 }
