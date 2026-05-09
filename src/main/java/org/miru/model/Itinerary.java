@@ -1,5 +1,6 @@
 package org.miru.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -19,6 +20,11 @@ public class Itinerary {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItineraryDay> days = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
+    private AppUser user;
 
     public Itinerary() {
     }
@@ -55,5 +61,13 @@ public class Itinerary {
 
     public void setDays(List<ItineraryDay> days) {
         this.days = days;
+    }
+
+    public AppUser getUser() {
+        return user;
+    }
+
+    public void setUser(AppUser user) {
+        this.user = user;
     }
 }
