@@ -25,9 +25,10 @@ public class RecommendationController {
     @GetMapping("/restaurants")
     public List<PlaceRecommendation> getRestaurants(
             @RequestParam String destination,
-            @RequestParam(required = false) String area
+            @RequestParam(required = false) String area,
+            @RequestParam(required = false) Integer limit
     ) {
-        return googlePlacesService.findRestaurants(destination, area);
+        return googlePlacesService.findRestaurants(destination, area, limit);
     }
 
     @GetMapping("/place")
@@ -65,10 +66,12 @@ public class RecommendationController {
 
         return result;
     }
+
     @GetMapping("/itinerary/{itineraryId}/day/{dayNumber}/restaurants")
     public List<PlaceRecommendation> getRestaurantsForItineraryDay(
             @PathVariable Long itineraryId,
-            @PathVariable int dayNumber
+            @PathVariable int dayNumber,
+            @RequestParam(required = false) Integer limit
     ) {
         Itinerary itinerary = itineraryRepository.findById(itineraryId)
                 .orElseThrow(() -> new RuntimeException("Itinerary not found"));
@@ -83,9 +86,13 @@ public class RecommendationController {
 
         for (String area : selectedDay.getRestaurantAreas()) {
             List<PlaceRecommendation> restaurants =
-                    googlePlacesService.findRestaurants(itinerary.getDestination(), area);
+                    googlePlacesService.findRestaurants(itinerary.getDestination(), area, limit);
 
             result.addAll(restaurants);
+        }
+
+        if (limit != null && limit > 0 && result.size() > limit) {
+            return result.subList(0, limit);
         }
 
         return result;

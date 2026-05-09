@@ -19,7 +19,7 @@ public class GooglePlacesService {
             .baseUrl("https://places.googleapis.com/v1")
             .build();
 
-    public List<PlaceRecommendation> findRestaurants(String destination, String area) {
+    public List<PlaceRecommendation> findRestaurants(String destination, String area, Integer limit) {
 
         String query;
 
@@ -52,32 +52,20 @@ public class GooglePlacesService {
         List<Map<String, Object>> places = (List<Map<String, Object>>) response.get("places");
 
         for (Map<String, Object> place : places) {
-            Map<String, Object> displayName = (Map<String, Object>) place.get("displayName");
+            PlaceRecommendation recommendation = mapGooglePlaceToRecommendation(place);
 
-            String name = displayName != null ? (String) displayName.get("text") : "Unknown place";
-            String address = (String) place.get("formattedAddress");
-
-            Object ratingObject = place.get("rating");
-            Double rating = ratingObject != null ? Double.valueOf(ratingObject.toString()) : null;
-
-            Map<String, Object> location = (Map<String, Object>) place.get("location");
-
-            Double latitude = null;
-            Double longitude = null;
-
-            if (location != null) {
-                Object latObject = location.get("latitude");
-                Object lngObject = location.get("longitude");
-
-                latitude = latObject != null ? Double.valueOf(latObject.toString()) : null;
-                longitude = lngObject != null ? Double.valueOf(lngObject.toString()) : null;
+            if (recommendation != null) {
+                recommendations.add(recommendation);
             }
+        }
 
-            recommendations.add(new PlaceRecommendation(name, address, rating, latitude, longitude));
+        if (limit != null && limit > 0 && recommendations.size() > limit) {
+            return recommendations.subList(0, limit);
         }
 
         return recommendations;
     }
+
     public PlaceRecommendation findPlace(String placeName, String destination) {
 
         Map<String, Object> requestBody = Map.of(
@@ -106,13 +94,27 @@ public class GooglePlacesService {
 
         Map<String, Object> place = places.get(0);
 
+        return mapGooglePlaceToRecommendation(place);
+    }
+
+    private PlaceRecommendation mapGooglePlaceToRecommendation(Map<String, Object> place) {
+
+        if (place == null) {
+            return null;
+        }
+
         Map<String, Object> displayName = (Map<String, Object>) place.get("displayName");
 
-        String name = displayName != null ? (String) displayName.get("text") : placeName;
+        String name = displayName != null
+                ? (String) displayName.get("text")
+                : "Unknown place";
+
         String address = (String) place.get("formattedAddress");
 
         Object ratingObject = place.get("rating");
-        Double rating = ratingObject != null ? Double.valueOf(ratingObject.toString()) : null;
+        Double rating = ratingObject != null
+                ? Double.valueOf(ratingObject.toString())
+                : null;
 
         Map<String, Object> location = (Map<String, Object>) place.get("location");
 
@@ -123,8 +125,13 @@ public class GooglePlacesService {
             Object latObject = location.get("latitude");
             Object lngObject = location.get("longitude");
 
-            latitude = latObject != null ? Double.valueOf(latObject.toString()) : null;
-            longitude = lngObject != null ? Double.valueOf(lngObject.toString()) : null;
+            latitude = latObject != null
+                    ? Double.valueOf(latObject.toString())
+                    : null;
+
+            longitude = lngObject != null
+                    ? Double.valueOf(lngObject.toString())
+                    : null;
         }
 
         return new PlaceRecommendation(name, address, rating, latitude, longitude);
