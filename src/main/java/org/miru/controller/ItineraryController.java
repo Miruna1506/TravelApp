@@ -6,7 +6,8 @@ import org.miru.repository.ItineraryRepository;
 import org.miru.model.Preference;
 import org.miru.service.GeminiService;
 import org.springframework.web.bind.annotation.*;
-
+import org.miru.model.ItineraryStats;
+import java.util.stream.Collectors;
 import java.util.List;
 
 @RestController
@@ -53,6 +54,21 @@ public class ItineraryController {
     public Itinerary getLatestItinerary() {
         return itineraryRepository.findTopByOrderByIdDesc()
                 .orElseThrow(() -> new RuntimeException("No itineraries found"));
+    }
+    @GetMapping("/stats")
+    public ItineraryStats getItineraryStats() {
+        List<Itinerary> itineraries = itineraryRepository.findAll();
+
+        long totalItineraries = itineraries.size();
+
+        long uniqueDestinations = itineraries.stream()
+                .map(Itinerary::getDestination)
+                .filter(destination -> destination != null && !destination.isBlank())
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet())
+                .size();
+
+        return new ItineraryStats(totalItineraries, uniqueDestinations);
     }
     @GetMapping("/{id}")
     public Itinerary getItineraryById(@PathVariable Long id) {
