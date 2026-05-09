@@ -1,5 +1,6 @@
 package org.miru.controller;
 
+import org.miru.model.DayRouteInfo;
 import org.miru.model.Itinerary;
 import org.miru.model.ItineraryDay;
 import org.miru.model.PlaceRecommendation;
@@ -44,17 +45,48 @@ public class RouteController {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Day not found"));
 
+        List<PlaceRecommendation> placesWithCoordinates = getPlacesWithCoordinates(
+                selectedDay,
+                itinerary.getDestination()
+        );
+
+        return googleRoutesService.calculateRoute(placesWithCoordinates);
+    }
+
+    @GetMapping("/itinerary/{itineraryId}")
+    public List<DayRouteInfo> getRoutesForItinerary(@PathVariable Long itineraryId) {
+        Itinerary itinerary = itineraryRepository.findById(itineraryId)
+                .orElseThrow(() -> new RuntimeException("Itinerary not found"));
+
+        List<DayRouteInfo> routes = new ArrayList<>();
+
+        for (ItineraryDay day : itinerary.getDays()) {
+            List<PlaceRecommendation> placesWithCoordinates = getPlacesWithCoordinates(
+                    day,
+                    itinerary.getDestination()
+            );
+
+            if (placesWithCoordinates.size() >= 2) {
+                RouteInfo routeInfo = googleRoutesService.calculateRoute(placesWithCoordinates);
+                routes.add(new DayRouteInfo(day.getDayNumber(), routeInfo));
+            }
+        }
+
+        return routes;
+    }
+
+    private List<PlaceRecommendation> getPlacesWithCoordinates(ItineraryDay day, String destination) {
         List<PlaceRecommendation> placesWithCoordinates = new ArrayList<>();
 
-        for (String placeName : selectedDay.getPlaces()) {
+        for (String placeName : day.getPlaces()) {
             PlaceRecommendation place =
-                    googlePlacesService.findPlace(placeName, itinerary.getDestination());
+                    googlePlacesService.findPlace(placeName, destination);
 
             if (place != null && place.getLatitude() != null && place.getLongitude() != null) {
                 placesWithCoordinates.add(place);
             }
         }
 
-        return googleRoutesService.calculateRoute(placesWithCoordinates);
+        return placesWithCoordinates;
     }
 }

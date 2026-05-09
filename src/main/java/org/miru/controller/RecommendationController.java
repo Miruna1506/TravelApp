@@ -23,8 +23,11 @@ public class RecommendationController {
     }
 
     @GetMapping("/restaurants")
-    public List<PlaceRecommendation> getRestaurants(@RequestParam String destination) {
-        return googlePlacesService.findRestaurants(destination);
+    public List<PlaceRecommendation> getRestaurants(
+            @RequestParam String destination,
+            @RequestParam(required = false) String area
+    ) {
+        return googlePlacesService.findRestaurants(destination, area);
     }
 
     @GetMapping("/place")

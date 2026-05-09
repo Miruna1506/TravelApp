@@ -19,10 +19,18 @@ public class GooglePlacesService {
             .baseUrl("https://places.googleapis.com/v1")
             .build();
 
-    public List<PlaceRecommendation> findRestaurants(String destination) {
+    public List<PlaceRecommendation> findRestaurants(String destination, String area) {
+
+        String query;
+
+        if (area != null && !area.isBlank()) {
+            query = "restaurants in " + area + ", " + destination;
+        } else {
+            query = "restaurants in " + destination;
+        }
 
         Map<String, Object> requestBody = Map.of(
-                "textQuery", "restaurants in " + destination
+                "textQuery", query
         );
 
         Map<String, Object> response = webClient.post()
@@ -51,6 +59,7 @@ public class GooglePlacesService {
 
             Object ratingObject = place.get("rating");
             Double rating = ratingObject != null ? Double.valueOf(ratingObject.toString()) : null;
+
             Map<String, Object> location = (Map<String, Object>) place.get("location");
 
             Double latitude = null;
@@ -63,6 +72,7 @@ public class GooglePlacesService {
                 latitude = latObject != null ? Double.valueOf(latObject.toString()) : null;
                 longitude = lngObject != null ? Double.valueOf(lngObject.toString()) : null;
             }
+
             recommendations.add(new PlaceRecommendation(name, address, rating, latitude, longitude));
         }
 
