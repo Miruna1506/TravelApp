@@ -49,7 +49,11 @@ public class ItineraryController {
     public List<Itinerary> getAllItineraries() {
         return itineraryRepository.findAll();
     }
-
+    @GetMapping("/latest")
+    public Itinerary getLatestItinerary() {
+        return itineraryRepository.findTopByOrderByIdDesc()
+                .orElseThrow(() -> new RuntimeException("No itineraries found"));
+    }
     @GetMapping("/{id}")
     public Itinerary getItineraryById(@PathVariable Long id) {
         return itineraryRepository.findById(id)
