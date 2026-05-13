@@ -1,6 +1,6 @@
 # TravelApp Backend
 
-Backend application for a travel planning platform that generates AI-based itineraries, saves user itineraries, recommends restaurants and calculates routes using Google APIs.
+Backend application for a travel planning platform that generates AI-based itineraries, saves user itineraries, recommends restaurants, and calculates routes using Google APIs.
 
 ---
 
@@ -27,22 +27,23 @@ Backend application for a travel planning platform that generates AI-based itine
 - User register
 - User login
 - JWT token generation
+- JWT token validation
 - Protected endpoints using `Authorization: Bearer <token>`
 
 ### Itinerary
 
 - Generate AI itinerary preview
 - Save itinerary manually
-- Get user itineraries
+- Get user-specific itineraries
 - Get latest itinerary
 - Search itineraries by destination
+- Get itinerary statistics
 - Update itinerary
 - Delete itinerary
-- User-specific itineraries
 
 ### Recommendations
 
-- Get places with address, rating and coordinates
+- Get places with address, rating, and coordinates
 - Get restaurants by destination
 - Get restaurants by destination and area
 - Get restaurants for a specific itinerary day
@@ -51,13 +52,13 @@ Backend application for a travel planning platform that generates AI-based itine
 
 - Calculate route for one itinerary day
 - Calculate routes for all itinerary days
-- Return distance, duration and encoded polyline
+- Return distance, duration, and encoded polyline
 
 ---
 
 ## API Documentation
 
-Swagger UI:
+Swagger UI is available at:
 
 ```http
 http://localhost:8080/swagger-ui/index.html
