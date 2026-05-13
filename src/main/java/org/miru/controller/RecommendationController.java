@@ -1,10 +1,13 @@
 package org.miru.controller;
 
+import org.miru.model.AppUser;
 import org.miru.model.Itinerary;
 import org.miru.model.ItineraryDay;
 import org.miru.model.PlaceRecommendation;
+import org.miru.repository.AppUserRepository;
 import org.miru.repository.ItineraryRepository;
 import org.miru.service.GooglePlacesService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -16,10 +19,16 @@ public class RecommendationController {
 
     private final GooglePlacesService googlePlacesService;
     private final ItineraryRepository itineraryRepository;
+    private final AppUserRepository appUserRepository;
 
-    public RecommendationController(GooglePlacesService googlePlacesService, ItineraryRepository itineraryRepository) {
+    public RecommendationController(
+            GooglePlacesService googlePlacesService,
+            ItineraryRepository itineraryRepository,
+            AppUserRepository appUserRepository
+    ) {
         this.googlePlacesService = googlePlacesService;
         this.itineraryRepository = itineraryRepository;
+        this.appUserRepository = appUserRepository;
     }
 
     @GetMapping("/restaurants")
@@ -42,9 +51,12 @@ public class RecommendationController {
     @GetMapping("/itinerary/{itineraryId}/day/{dayNumber}/places")
     public List<PlaceRecommendation> getPlacesForItineraryDay(
             @PathVariable Long itineraryId,
-            @PathVariable int dayNumber
+            @PathVariable int dayNumber,
+            Authentication authentication
     ) {
-        Itinerary itinerary = itineraryRepository.findById(itineraryId)
+        AppUser user = getCurrentUser(authentication);
+
+        Itinerary itinerary = itineraryRepository.findByIdAndUser(itineraryId, user)
                 .orElseThrow(() -> new RuntimeException("Itinerary not found"));
 
         ItineraryDay selectedDay = itinerary.getDays()
@@ -71,9 +83,12 @@ public class RecommendationController {
     public List<PlaceRecommendation> getRestaurantsForItineraryDay(
             @PathVariable Long itineraryId,
             @PathVariable int dayNumber,
-            @RequestParam(required = false) Integer limit
+            @RequestParam(required = false) Integer limit,
+            Authentication authentication
     ) {
-        Itinerary itinerary = itineraryRepository.findById(itineraryId)
+        AppUser user = getCurrentUser(authentication);
+
+        Itinerary itinerary = itineraryRepository.findByIdAndUser(itineraryId, user)
                 .orElseThrow(() -> new RuntimeException("Itinerary not found"));
 
         ItineraryDay selectedDay = itinerary.getDays()
@@ -96,5 +111,12 @@ public class RecommendationController {
         }
 
         return result;
+    }
+
+    private AppUser getCurrentUser(Authentication authentication) {
+        String email = authentication.getName();
+
+        return appUserRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

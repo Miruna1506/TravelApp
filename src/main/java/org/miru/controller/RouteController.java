@@ -1,13 +1,16 @@
 package org.miru.controller;
 
+import org.miru.model.AppUser;
 import org.miru.model.DayRouteInfo;
 import org.miru.model.Itinerary;
 import org.miru.model.ItineraryDay;
 import org.miru.model.PlaceRecommendation;
 import org.miru.model.RouteInfo;
+import org.miru.repository.AppUserRepository;
 import org.miru.repository.ItineraryRepository;
 import org.miru.service.GooglePlacesService;
 import org.miru.service.GoogleRoutesService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -18,15 +21,18 @@ import java.util.List;
 public class RouteController {
 
     private final ItineraryRepository itineraryRepository;
+    private final AppUserRepository appUserRepository;
     private final GooglePlacesService googlePlacesService;
     private final GoogleRoutesService googleRoutesService;
 
     public RouteController(
             ItineraryRepository itineraryRepository,
+            AppUserRepository appUserRepository,
             GooglePlacesService googlePlacesService,
             GoogleRoutesService googleRoutesService
     ) {
         this.itineraryRepository = itineraryRepository;
+        this.appUserRepository = appUserRepository;
         this.googlePlacesService = googlePlacesService;
         this.googleRoutesService = googleRoutesService;
     }
@@ -34,9 +40,12 @@ public class RouteController {
     @GetMapping("/itinerary/{itineraryId}/day/{dayNumber}")
     public RouteInfo getRouteForItineraryDay(
             @PathVariable Long itineraryId,
-            @PathVariable int dayNumber
+            @PathVariable int dayNumber,
+            Authentication authentication
     ) {
-        Itinerary itinerary = itineraryRepository.findById(itineraryId)
+        AppUser user = getCurrentUser(authentication);
+
+        Itinerary itinerary = itineraryRepository.findByIdAndUser(itineraryId, user)
                 .orElseThrow(() -> new RuntimeException("Itinerary not found"));
 
         ItineraryDay selectedDay = itinerary.getDays()
@@ -54,8 +63,13 @@ public class RouteController {
     }
 
     @GetMapping("/itinerary/{itineraryId}")
-    public List<DayRouteInfo> getRoutesForItinerary(@PathVariable Long itineraryId) {
-        Itinerary itinerary = itineraryRepository.findById(itineraryId)
+    public List<DayRouteInfo> getRoutesForItinerary(
+            @PathVariable Long itineraryId,
+            Authentication authentication
+    ) {
+        AppUser user = getCurrentUser(authentication);
+
+        Itinerary itinerary = itineraryRepository.findByIdAndUser(itineraryId, user)
                 .orElseThrow(() -> new RuntimeException("Itinerary not found"));
 
         List<DayRouteInfo> routes = new ArrayList<>();
@@ -88,5 +102,12 @@ public class RouteController {
         }
 
         return placesWithCoordinates;
+    }
+
+    private AppUser getCurrentUser(Authentication authentication) {
+        String email = authentication.getName();
+
+        return appUserRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }
